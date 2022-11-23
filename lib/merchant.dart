@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:narayana/main.dart';
 import 'package:narayana/merchant_view.dart';
+import 'package:velocity_x/velocity_x.dart';
 
 class MerchantScreen extends StatelessWidget {
   const MerchantScreen({Key? key, required this.creds}) : super(key: key);
@@ -42,6 +43,9 @@ class MerchantScreen extends StatelessWidget {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return "Cannot be empty";
+                      }
+                      if (int.tryParse(value) == null) {
+                        return "Has to be integer";
                       }
                       return null;
                     },
@@ -96,7 +100,12 @@ class MerchantScreen extends StatelessWidget {
             runAlignment: WrapAlignment.center,
             spacing: 20,
             children: [
-              ElevatedButton(onPressed: () {}, child: const Text("Orders")),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(createRoute(MerchantOrders(creds: creds)));
+                },
+                child: const Text("Orders"),
+              ),
               ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(createRoute(MerchantBooks(creds: creds)));
@@ -108,6 +117,47 @@ class MerchantScreen extends StatelessWidget {
                   },
                   child: const Text("Add")),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MerchantOrders extends StatelessWidget {
+  MerchantOrders({Key? key, required this.creds}) : super(key: key);
+  late List orders;
+  final Map creds;
+  @override
+  Widget build(BuildContext context) {
+    orders = Hive.box("orders")
+        .values
+        .toList()
+        .where((element) => element["book"]["creds"]["email"] == creds["email"])
+        .toList();
+    return SafeArea(
+      child: Scaffold(
+        body: SizedBox.expand(
+          child: ListView.builder(
+            itemBuilder: (context, index) {
+              final item = orders[index];
+              return Card(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Image.memory(item["book"]["image"], height: 150),
+                    Text("Author = " + item["book"]["author"]),
+                    10.heightBox,
+                    Text("Price = ${item['book']['price']}"),
+                    10.heightBox,
+                    Text("Buyer Name = ${item['buyer']['fname']}"),
+                    10.heightBox,
+                    Text("Date Time = ${item['dateTime']}"),
+                  ],
+                ),
+              );
+            },
+            itemCount: orders.length,
           ),
         ),
       ),

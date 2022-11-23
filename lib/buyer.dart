@@ -20,7 +20,9 @@ class BuyerScreen extends StatelessWidget {
             children: [
               ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).push(createRoute(MerchantListView()));
+                    Navigator.of(context).push(createRoute(MerchantListView(
+                      creds: creds,
+                    )));
                   },
                   child: const Text("Merchant")),
               ElevatedButton(
@@ -33,7 +35,7 @@ class BuyerScreen extends StatelessWidget {
               ElevatedButton(onPressed: () {}, child: const Text("Frequently")),
               ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).push(createRoute(const AllBooks()));
+                    Navigator.of(context).push(createRoute(AllBooks(creds: creds)));
                   },
                   child: const Text("All")),
             ],
@@ -45,7 +47,8 @@ class BuyerScreen extends StatelessWidget {
 }
 
 class MerchantListView extends StatelessWidget {
-  MerchantListView({Key? key}) : super(key: key);
+  MerchantListView({Key? key, required this.creds}) : super(key: key);
+  final Map creds;
 
   List people = Hive.box("cred").values.toList();
   @override
@@ -61,7 +64,10 @@ class MerchantListView extends StatelessWidget {
               return ListTile(
                 title: Text(item["fname"] + item["lname"]),
                 onTap: () {
-                  Navigator.of(context).push(createRoute(MerchantBooks(creds: item)));
+                  Navigator.of(context).push(createRoute(MerchantBooks(
+                    creds: item,
+                    buyerCreds: creds,
+                  )));
                 },
               );
             },
@@ -117,7 +123,8 @@ class NearScreen extends StatelessWidget {
 }
 
 class AllBooks extends StatelessWidget {
-  const AllBooks({Key? key}) : super(key: key);
+  const AllBooks({Key? key, required this.creds}) : super(key: key);
+  final Map creds;
   @override
   Widget build(BuildContext context) {
     List list = Hive.box("books").values.toList();
@@ -130,16 +137,32 @@ class AllBooks extends StatelessWidget {
             final Map item = list[index];
             return Card(
               margin: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Image.memory(item["image"], height: 150),
-                  10.heightBox,
-                  Text("Author = " + item["author"]),
-                  10.heightBox,
-                  Text("Price = ${item['price']}"),
-                  10.heightBox,
-                  Text("Merchant Name : ${item["creds"] != null ? item["creds"]["fname"] : "NO Name"}"),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Image.memory(item["image"], height: 150),
+                      10.heightBox,
+                      Text("Author = " + item["author"]),
+                      10.heightBox,
+                      Text("Price = ${item['price']}"),
+                      10.heightBox,
+                      Text("Merchant Name : ${item["creds"] != null ? item["creds"]["fname"] : "No Name"}"),
+                      10.heightBox,
+                      ElevatedButton(
+                        onPressed: () {
+                          Hive.box("orders").add({
+                            "book": item,
+                            "buyer": creds,
+                            "dateTime": DateTime.now(),
+                          });
+                          context.showToast(msg: "Succesfully bought");
+                        },
+                        child: const Text("Buy"),
+                      )
+                    ],
+                  ),
                 ],
               ),
             );

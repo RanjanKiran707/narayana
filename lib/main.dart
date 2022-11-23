@@ -6,6 +6,7 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox("cred");
   await Hive.openBox("books");
+  await Hive.openBox("orders");
   runApp(const MyApp());
 }
 
